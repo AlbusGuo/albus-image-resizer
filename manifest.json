@@ -1,10 +1,10 @@
 {
-    "id": "albus-image-resizer",
-    "name": "Image Resizer",
-    "version": "0.2",
-    "minAppVersion": "1.0.9",
-    "description": "在 obsidian 中通过鼠标拖拽轻松调整图片大小",
-    "author": "Albus",
-    "authorUrl": "https://github.com/AlbusG",
-    "isDesktopOnly": true
+	"id": "albus-image-resizer",
+	"name": "Image Resizer",
+	"version": "0.2.0",
+	"minAppVersion": "1.0.9",
+	"description": "在 Obsidian 中通过鼠标拖拽轻松调整图片大小",
+	"author": "Albus",
+	"authorUrl": "https://github.com/AlbusG",
+	"isDesktopOnly": true
 }
