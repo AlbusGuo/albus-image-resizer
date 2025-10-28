@@ -1,6 +1,6 @@
 import { MarkdownView } from 'obsidian';
 import { IImageResizePlugin } from '../types';
-import { LinkUpdateService } from '../utils/link-update-service';
+import { LinkUpdateService } from '../utils';
 
 /**
  * 图片调整大小处理器
