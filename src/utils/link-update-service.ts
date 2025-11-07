@@ -42,14 +42,34 @@ export class LinkUpdateService {
 
 		let imageName: string | null = img.getAttribute('src');
 
+		// 调试信息
+		if (this.plugin.settings.debug) {
+			console.log('[Image Debug] ========== 开始调整图片大小 ==========');
+			console.log('[Image Debug] img.src:', img.getAttribute('src'));
+			console.log('[Image Debug] inTable:', inTable);
+			console.log('[Image Debug] inCallout:', inCallout);
+			console.log('[Image Debug] isExcalidraw:', isExcalidraw);
+		}
+
 		if (imageName?.startsWith('http')) {
+			if (this.plugin.settings.debug) {
+				console.log('[Image Debug] 检测到外部链接');
+			}
 			this.updateExternalLink(activeView, img, target_pos, newWidth, newHeight, inTable, inCallout);
 		} else if (isExcalidraw) {
 			const draw_base_name = this.getExcalidrawBaseName(img);
 			img.style.maxWidth = 'none';
+			if (this.plugin.settings.debug) {
+				console.log('[Image Debug] 检测到 Excalidraw，basename:', draw_base_name);
+			}
 			this.updateInternalLink(activeView, img, target_pos, draw_base_name, newWidth, newHeight, inTable, inCallout);
 		} else {
 			imageName = img.closest('.internal-embed')?.getAttribute('src') || null;
+			if (this.plugin.settings.debug) {
+				console.log('[Image Debug] 检测到内部图片');
+				console.log('[Image Debug] .internal-embed src:', imageName);
+				console.log('[Image Debug] 最终 imageName:', imageName);
+			}
 			this.updateInternalLink(activeView, img, target_pos, imageName, newWidth, newHeight, inTable, inCallout);
 		}
 	}
@@ -72,6 +92,13 @@ export class LinkUpdateService {
 		const editor = activeView.editor;
 		const editorView = (editor as any).cm;
 		const target_line = editorView.state.doc.lineAt(target_pos);
+
+		if (this.plugin.settings.debug) {
+			console.log('[Image Debug] updateInternalLink called');
+			console.log('[Image Debug] imageName:', imageName);
+			console.log('[Image Debug] target_line:', target_line.text);
+			console.log('[Image Debug] inTable:', inTable, 'inCallout:', inCallout);
+		}
 
 		if (!inCallout && !inTable) {
 			const matched = this.matchLineWithInternalLink(target_line.text, imageName, newWidth, inTable);
@@ -101,11 +128,19 @@ export class LinkUpdateService {
 		const matched_results: LinkMatch[] = [];
 		const matched_lines: number[] = [];
 
+		if (this.plugin.settings.debug) {
+			console.log(`[${mode} Debug] 开始搜索，起始行:`, start_line_number);
+		}
+
 		// 向下搜索
-		for (let i = start_line_number; i <= editor.lineCount; i++) {
+		for (let i = start_line_number; i <= editor.lineCount(); i++) {
 			const line = editorView.state.doc.line(i);
 			if (!start_reg.test(line.text)) break;
+			
 			const matched = this.matchLineWithInternalLink(line.text, imageName, newWidth, inTable);
+			if (this.plugin.settings.debug && matched.length > 0) {
+				console.log(`[${mode} Debug] 第${i}行匹配:`, matched);
+			}
 			matched_results.push(...matched);
 			matched_lines.push(...new Array(matched.length).fill(i));
 		}
@@ -114,9 +149,17 @@ export class LinkUpdateService {
 		for (let i = start_line_number - 1; i >= 1; i--) {
 			const line = editorView.state.doc.line(i);
 			if (!start_reg.test(line.text)) break;
+			
 			const matched = this.matchLineWithInternalLink(line.text, imageName, newWidth, inTable);
+			if (this.plugin.settings.debug && matched.length > 0) {
+				console.log(`[${mode} Debug] 第${i}行匹配:`, matched);
+			}
 			matched_results.push(...matched);
 			matched_lines.push(...new Array(matched.length).fill(i));
+		}
+
+		if (this.plugin.settings.debug) {
+			console.log(`[${mode} Debug] 总匹配结果:`, matched_results.length);
 		}
 
 		if (matched_results.length === 1) {
@@ -198,9 +241,10 @@ export class LinkUpdateService {
 		const matched_lines: number[] = [];
 
 		// 向下搜索
-		for (let i = start_line_number; i <= editor.lineCount; i++) {
+		for (let i = start_line_number; i <= editor.lineCount(); i++) {
 			const line = editorView.state.doc.line(i);
 			if (!start_reg.test(line.text)) break;
+			
 			const matched = this.matchLineWithExternalLink(line.text, link, altText || '', newWidth, inTable);
 			matched_results.push(...matched);
 			matched_lines.push(...new Array(matched.length).fill(i));
@@ -210,6 +254,7 @@ export class LinkUpdateService {
 		for (let i = start_line_number - 1; i >= 1; i--) {
 			const line = editorView.state.doc.line(i);
 			if (!start_reg.test(line.text)) break;
+			
 			const matched = this.matchLineWithExternalLink(line.text, link, altText || '', newWidth, inTable);
 			matched_results.push(...matched);
 			matched_lines.push(...new Array(matched.length).fill(i));
@@ -268,6 +313,7 @@ export class LinkUpdateService {
 		let wiki_match: RegExpExecArray | null;
 		while ((wiki_match = regWikiLink.exec(line_text)) !== null) {
 			const matched_link = wiki_match[0];
+			
 			if (matched_link.includes(target_name)) {
 				const normal_link = intable ? matched_link.replace(/\\\|/g, '|') : matched_link;
 				const link_match = normal_link.match(/!\[\[(.*?)(\||\]\])/);
